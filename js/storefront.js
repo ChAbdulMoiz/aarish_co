@@ -62,6 +62,7 @@
   }
   const toggle = (id, on) => $(id).classList.toggle('open', on);
   $('menuToggle').onclick = () => $('mainNav').classList.toggle('open');
+  $('mainNav').querySelectorAll('a').forEach(link => link.onclick = () => $('mainNav').classList.remove('open'));
   $('cartOpen').onclick = () => toggle('drawer', true); $('cartClose').onclick = () => toggle('drawer', false);
   $('drawer').onclick = event => { if (event.target.id === 'drawer') toggle('drawer', false); };
   $('checkoutClose').onclick = () => toggle('checkoutModal', false); $('checkoutModal').onclick = event => { if (event.target.id === 'checkoutModal') toggle('checkoutModal', false); };
