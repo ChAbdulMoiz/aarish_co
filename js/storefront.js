@@ -6,6 +6,7 @@
     ? 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=900&auto=format&fit=crop&q=85'
     : 'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=900&auto=format&fit=crop&q=85';
   let catalog = [], settings = { delivery_fee: 0 }, cart = {}, filters = { clothing: 'All', jewelry: 'All' };
+  let productsChannel = null;
 
   const client = () => {
     if (!window.sb) throw Error('Supabase is not configured. Add the project URL and publishable key in js/config.js.');
@@ -82,7 +83,7 @@
     try {
       client();
       const [products, store] = await Promise.all([
-        sb.from('products').select('id,name,description,category,price,sale_price,image_url,available,featured,brand,created_at').eq('available', true).order('featured', { ascending: false }).order('created_at', { ascending: false }),
+        sb.from('products').select('id,name,description,category,price,sale_price,image_url,available,featured,brand,stock_quantity,created_at').eq('available', true).order('featured', { ascending: false }).order('created_at', { ascending: false }),
         sb.from('store_settings').select('delivery_fee,phone,address').eq('id', 1).single()
       ]);
       if (products.error) throw products.error; if (store.error) throw store.error;
@@ -93,5 +94,9 @@
       document.querySelectorAll('.product-grid').forEach(el => { el.innerHTML = `<div class="empty">${esc(error.message || 'Could not load the collections.')}</div>`; });
     }
   }
-  load();
+  function subscribeToProducts() {
+    if (!sb.channel || productsChannel) return;
+    productsChannel = sb.channel('storefront-products-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => load()).subscribe();
+  }
+  load().finally(subscribeToProducts);
 })();
